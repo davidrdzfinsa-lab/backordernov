@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FINSA Soluciones Industriales | Inteligencia Visual de BackOrder</title>
+  <style>
+    :root {
+      --bg-main: #FFFFFF;
+      --bg-soft: #F9F7F7;
+      --wine-primary: #721121;
+      --wine-dark: #4A0A15;
+      --wine-light: #A51C30;
+      --wine-bright: #C8233C;
+      --wine-tint: #FBECEE;
+      --black-primary: #121212;
+      --black-secondary: #2B2B2B;
+      --gray-dark: #555555;
+      --gray-muted: #888888;
+      --border-color: #E5DCDD;
+      --st-facturar: #1B5E20;
+      --st-facturar-bg: #E8F5E9;
+      --st-vencido: #9E1B32;
+      --st-vencido-bg: #FDECEA;
+      --st-porvencer: #B25E00;
+      --st-porvencer-bg: #FFF3E0;
+      --st-entiempo: #262626;
+      --st-entiempo-bg: #EFEFEF;
+      --radius: 10px;
+      --shadow-sm: 0 2px 10px rgba(18, 18, 18, 0.05);
+      --shadow-md: 0 8px 26px rgba(114, 17, 33, 0.13);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--black-primary);
+      line-height: 1.5;
+      padding-bottom: 60px;
+    }
+
+    /* TOOLTIP FLOTANTE PARA GRÁFICAS */
+    #chartTooltip {
+      position: fixed;
+      pointer-events: none;
+      background: rgba(18, 18, 18, 0.95);
+      color: #FFFFFF;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border-left: 4px solid var(--wine-bright);
+      font-size: 12px;
+      z-index: 2000;
+      display: none;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+      max-width: 290px;
+      line-height: 1.4;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, var(--black-primary) 0%, var(--wine-dark) 55%, var(--wine-primary) 100%);
+      color: #FFFFFF;
+      padding: 26px 38px;
+      border-bottom: 4px solid var(--wine-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand-badge {
+      display: inline-block;
+      background-color: var(--wine-light);
+      color: #FFF;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+
+    header h1 {
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+    }
+
+    header p {
+      color: #E2D5D7;
+      font-size: 13.5px;
+    }
+
+    .header-meta {
+      text-align: right;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 12px 18px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      font-size: 12.5px;
+    }
+
+    .container {
+      max-width: 1460px;
+      margin: 0 auto;
+      padding: 24px 30px;
+    }
+
+    /* BANNER INTERACTIVO */
+    .interactive-banner {
+      background-color: var(--wine-tint);
+      border-left: 5px solid var(--wine-primary);
+      padding: 13px 18px;
+      border-radius: 6px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    /* BOTONES */
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-wine { background: var(--wine-primary); color: #FFF; }
+    .btn-wine:hover { background: var(--wine-dark); }
+    .btn-black { background: var(--black-primary); color: #FFF; }
+    .btn-black:hover { background: #333333; }
+
+    .info-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: var(--wine-tint);
+      color: var(--wine-primary);
+      border: 1px solid var(--wine-primary);
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .info-btn:hover {
+      background-color: var(--wine-primary);
+      color: #FFF;
+      transform: scale(1.12);
+    }
+
+    /* FILTROS */
+    .filters-panel {
+      background: var(--bg-soft);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .filters-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .filters-header h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--wine-primary);
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 12px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .filter-group label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--black-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      padding: 8px 10px;
+      border: 1px solid #C9BFC1;
+      border-radius: 6px;
+      font-size: 12.5px;
+      background: #FFF;
+      color: var(--black-primary);
+    }
+
+    /* KPIS */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .kpi-card {
+      background: #FFF;
+      border: 1px solid var(--border-color);
+      border-top: 4px solid var(--black-primary);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .kpi-card.wine-top { border-top-color: var(--wine-primary); }
+    .kpi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .kpi-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: var(--gray-dark); }
+    .kpi-value { font-size: 23px; font-weight: 800; color: var(--black-primary); margin-bottom: 4px; }
+    .kpi-card.wine-top .kpi-value { color: var(--wine-primary); }
+    .kpi-sub { font-size: 11.5px; color: var(--gray-muted); display: flex; justify-content: space-between; align-items: center; }
+    .badge-pill { padding: 2px 8px; border-radius: 12px; font-weight: 700; font-size: 10.5px; }
+
+    /* NUEVO LAYOUT DE GRÁFICAS OPTIMIZADO */
+    .charts-row-top {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 22px;
+      margin-bottom: 22px;
+    }
+
+    .charts-row-bottom {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+      margin-bottom: 30px;
+    }
+
+    .chart-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid var(--bg-soft);
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+      gap: 8px;
+    }
+
+    .chart-title-box h3 {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--black-primary);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .chart-title-box p {
+      font-size: 11.5px;
+      color: var(--gray-muted);
+      margin-top: 2px;
+    }
+
+    .wine-dot {
+      width: 9px;
+      height: 9px;
+      background-color: var(--wine-primary);
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .svg-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .interactive-shape {
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .interactive-shape:hover {
+      opacity: 0.85;
+    }
+
+    /* LEYENDAS DE GRÁFICAS */
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #F0EAEB;
+      font-size: 11.5px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--black-secondary);
+      padding: 3px 7px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+
+    .legend-item:hover {
+      background: var(--wine-tint);
+    }
+
+    .legend-swatch {
+      width: 11px;
+      height: 11px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    /* TABLA */
+    .table-section {
+      background: #FFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 34px;
+      overflow: hidden;
+    }
+
+    .table-header-bar {
+      background: var(--black-primary);
+      color: #FFF;
+      padding: 15px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      max-height: 500px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    thead {
+      background: var(--wine-dark);
+      color: #FFF;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    th {
+      padding: 11px 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+
+    th .th-content { display: flex; align-items: center; gap: 5px; }
+    th .info-btn { background: rgba(255,255,255,0.15); color: #FFF; border-color: rgba(255,255,255,0.4); width: 16px; height: 16px; font-size: 10px; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    tbody tr:nth-child(even) { background: #FCFBFB; }
+    tbody tr:hover { background: var(--wine-tint); }
+    td { padding: 10px 12px; vertical-align: middle; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .st-facturar { background: var(--st-facturar-bg); color: var(--st-facturar); border: 1px solid #A5D6A7; }
+    .st-vencido { background: var(--st-vencido-bg); color: var(--st-vencido); border: 1px solid #F5B7B1; }
+    .st-porvencer { background: var(--st-porvencer-bg); color: var(--st-porvencer); border: 1px solid #FFCC80; }
+    .st-entiempo { background: var(--st-entiempo-bg); color: var(--st-entiempo); border: 1px solid #CCCCCC; }
+    .num-col { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+    /* GUÍA DE CAMPO INFERIOR */
+    .field-guide-section {
+      background: #FFF;
+      border: 2px solid var(--wine-primary);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    .field-guide-header {
+      background: linear-gradient(90deg, var(--wine-dark) 0%, var(--black-primary) 100%);
+      color: #FFF;
+      padding: 20px 26px;
+    }
+
+    .tabs-bar {
+      display: flex;
+      background: var(--bg-soft);
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 13px 22px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--black-secondary);
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      color: var(--wine-primary);
+      border-bottom-color: var(--wine-primary);
+      background: #FFF;
+    }
+
+    .tab-content { display: none; padding: 24px; }
+    .tab-content.active { display: block; }
+
+    .decision-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 18px;
+    }
+
+    .decision-card {
+      border: 1px solid var(--border-color);
+      border-left: 5px solid var(--wine-primary);
+      border-radius: 8px;
+      padding: 16px;
+      background: #FAFAFA;
+    }
+
+    .decision-card.black-border { border-left-color: var(--black-primary); }
+    .decision-card h4 { font-size: 14.5px; color: var(--wine-dark); margin-bottom: 6px; }
+    .decision-card p { font-size: 12.5px; color: var(--gray-dark); margin-bottom: 8px; }
+    .decision-card ul { padding-left: 18px; font-size: 12.5px; }
+    .decision-card ul li { margin-bottom: 5px; }
+
+    /* MODAL POP-UP */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(18, 18, 18, 0.74);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1500;
+      padding: 20px;
+      backdrop-filter: blur(3px);
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: #FFF;
+      width: 100%;
+      max-width: 720px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid var(--wine-primary);
+      box-shadow: 0 20px 55px rgba(0,0,0,0.45);
+      animation: popIn 0.2s ease-out;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, var(--wine-dark) 0%, var(--black-primary) 100%);
+      color: #FFF;
+      padding: 16px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-close {
+      background: rgba(255,255,255,0.18);
+      color: #FFF;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 22px;
+      max-height: 76vh;
+      overflow-y: auto;
+    }
+
+    .modal-section {
+      margin-bottom: 15px;
+      padding-bottom: 13px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .modal-section h4 { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--wine-primary); margin-bottom: 6px; }
+    .modal-section p { font-size: 13.5px; color: var(--black-secondary); }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      background: var(--bg-soft);
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+
+    .detail-item span { display: block; font-size: 10.5px; color: var(--gray-muted); text-transform: uppercase; font-weight: 700; }
+    .detail-item strong { font-size: 13px; color: var(--black-primary); }
+
+    .mini-order-list {
+      max-height: 190px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+
+    .mini-order-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid #EFEFEF;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mini-order-item:last-child { border-bottom: none; }
+
+    @media (max-width: 1100px) {
+      .charts-row-top { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOOLTIP DINÁMICO -->
+  <div id="chartTooltip"></div>
+
+  <!-- HEADER -->
+  <header>
+    <div>
+      <span class="brand-badge">FINSA Soluciones Industriales</span>
+      <h1>Inteligencia Visual de BackOrder &mdash; División Servicios</h1>
+      <p>Tablero Interactivo con Gráficas Analíticas, Pop-ups de Diagnóstico y Guía de Decisiones en Campo</p>
+    </div>
+    <div class="header-meta">
+      <div style="color:#F4D7DA; font-weight:700;">Corte Oficial: 19 de Noviembre de 2026</div>
+      <div style="color:#CCCCCC;">Archivo: BackOrder_Datos.xlsx (28 Partidas)</div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- BANNER DE INSTRUCCIONES -->
+    <div class="interactive-banner">
+      <div>
+        <strong>Interacción Total en Gráficas y Objetos:</strong> Pasa el cursor sobre cualquier gráfica para ver métricas al instante y <strong>haz clic sobre cualquier gajo, barra, burbuja, punto o icono <span class="info-btn" style="display:inline-flex;">i</span></strong> para abrir un <strong>Pop-up detallado</strong> con las órdenes involucradas y su explicación estratégica.
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-wine" onclick="openVariableModal('logica_general')">Lógica del Modelo</button>
+        <button class="btn btn-black" onclick="exportToCSV()">Exportar CSV</button>
+      </div>
+    </div>
+
+    <!-- PANEL DE FILTROS -->
+    <section class="filters-panel">
+      <div class="filters-header">
+        <h2>Filtros Dinámicos Multidimensionales</h2>
+        <button class="btn btn-black" onclick="resetFilters()">Restablecer Todo</button>
+      </div>
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label>Sucursal / Almacén <span class="info-btn" onclick="openVariableModal('filtro_sucursal')">i</span></label>
+          <select id="filterSucursal" onchange="applyFilters()">
+            <option value="ALL">Todas las Sucursales</option>
+            <option value="M01G">MTY01 - Monterrey (M01G)</option>
+            <option value="C01G">C01 - Bajío / Centro (C01G)</option>
+            <option value="X02CE">N04 - Operación Especial (X02CE)</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Estatus Operativo <span class="info-btn" onclick="openVariableModal('filtro_estatus')">i</span></label>
+          <select id="filterStatus" onchange="applyFilters()">
+            <option value="ALL">Todos los Estatus</option>
+            <option value="FACTURAR">Listo para Facturar (Quick Win)</option>
+            <option value="VENCIDO">Vencido Crítico (&lt; 19 Nov)</option>
+            <option value="POR_VENCER">Por Vencer (19 - 20 Nov)</option>
+            <option value="EN_TIEMPO">En Tiempo (&gt; 20 Nov)</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Cliente Industrial <span class="info-btn" onclick="openVariableModal('filtro_cliente')">i</span></label>
+          <select id="filterCliente" onchange="applyFilters()">
+            <option value="ALL">Todos los Clientes</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Comprador Asignado <span class="info-btn" onclick="openVariableModal('filtro_comprador')">i</span></label>
+          <select id="filterComprador" onchange="applyFilters()">
+            <option value="ALL">Todos los Compradores</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Agente Comercial <span class="info-btn" onclick="openVariableModal('filtro_agente')">i</span></label>
+          <select id="filterAgente" onchange="applyFilters()">
+            <option value="ALL">Todos los Agentes</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Búsqueda Rápida</label>
+          <input type="text" id="filterSearch" placeholder="Pedido, SKU, proveedor, cliente..." oninput="applyFilters()" />
+        </div>
+      </div>
+    </section>
+
+    <!-- TARJETAS KPI -->
+    <section class="kpi-grid">
+      <div class="kpi-card wine-top" onclick="openVariableModal('kpi_total')">
+        <div class="kpi-top">
+          <span class="kpi-label">Valor Total en Cartera</span>
+          <span class="info-btn" onclick="event.stopPropagation(); openVariableModal('kpi_total')">i</span>
+        </div>
+        <div class="kpi-value" id="kpiTotalVal">$0.00</div>
+        <div class="kpi-sub">
+          <span id="kpiTotalCount">0 partidas</span>
+          <span class="badge-pill" style="background:var(--wine-tint); color:var(--wine-primary);">100% Vista</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" onclick="openVariableModal('kpi_margen')">
+        <div class="kpi-top">
+          <span class="kpi-label">Utilidad Bruta y Margen</span>
+          <span class="info-btn" onclick="event.stopPropagation(); openVariableModal('kpi_margen')">i</span>
+        </div>
+        <div class="kpi-value" id="kpiMargenVal">$0.00</div>
+        <div class="kpi-sub">
+          <span id="kpiCostoSub">Costo: $0.00</span>
+          <span class="badge-pill" id="kpiMargenPct" style="background:#EFEFEF; color:#121212;">0.0%</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" onclick="openStatusDrillModal('FACTURAR')">
+        <div class="kpi-top">
+          <span class="kpi-label">Listo para Facturar Hoy</span>
+          <span class="info-btn" onclick="event.stopPropagation(); openVariableModal('kpi_facturar')">i</span>
+        </div>
+        <div class="kpi-value" id="kpiFacturarVal" style="color:var(--st-facturar);">$0.00</div>
+        <div class="kpi-sub">
+          <span id="kpiFacturarCount">0 partidas</span>
+          <span class="badge-pill st-facturar" id="kpiFacturarPct">0%</span>
+        </div>
+      </div>
+
+      <div class="kpi-card wine-top" onclick="openStatusDrillModal('VENCIDO')">
+        <div class="kpi-top">
+          <span class="kpi-label">BackOrder Vencido Crítico</span>
+          <span class="info-btn" onclick="event.stopPropagation(); openVariableModal('kpi_vencido')">i</span>
+        </div>
+        <div class="kpi-value" id="kpiVencidoVal" style="color:var(--wine-light);">$0.00</div>
+        <div class="kpi-sub">
+          <span id="kpiVencidoCount">0 atrasadas</span>
+          <span class="badge-pill st-vencido" id="kpiVencidoPct">0%</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" onclick="openStatusDrillModal('POR_VENCER')">
+        <div class="kpi-top">
+          <span class="kpi-label">Por Vencer (19-20 Nov)</span>
+          <span class="info-btn" onclick="event.stopPropagation(); openVariableModal('kpi_porvencer')">i</span>
+        </div>
+        <div class="kpi-value" id="kpiPorVencerVal" style="color:var(--st-porvencer);">$0.00</div>
+        <div class="kpi-sub">
+          <span id="kpiPorVencerCount">0 en límite</span>
+          <span class="badge-pill st-porvencer" id="kpiPorVencerPct">0%</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" onclick="openStatusDrillModal('EN_TIEMPO')">
+        <div class="kpi-top">
+          <span class="kpi-label">BackOrder En Tiempo</span>
+          <span class="info-btn" onclick="event.stopPropagation(); openVariableModal('kpi_entiempo')">i</span>
+        </div>
+        <div class="kpi-value" id="kpiEnTiempoVal">$0.00</div>
+        <div class="kpi-sub">
+          <span id="kpiEnTiempoCount">0 vigentes</span>
+          <span class="badge-pill st-entiempo" id="kpiEnTiempoPct">0%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- FILA SUPERIOR AJUSTADA: 1. DONA DE ESTATUS + 3. SCATTER PLOT DE RENTABILIDAD -->
+    <section class="charts-row-top">
+      <!-- GRÁFICA 1: DONA INTERACTIVA -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title-box">
+            <h3><span class="wine-dot"></span> Salud de Cartera por Estatus (Dona Interactiva)</h3>
+            <p>Haz clic en cualquier arco para abrir el Pop-up con las órdenes de ese estatus</p>
+          </div>
+          <span class="info-btn" onclick="openVariableModal('graf_dona')">i</span>
+        </div>
+        <div class="svg-container" id="donutChartContainer"></div>
+        <div class="chart-legend" id="donutLegend"></div>
+      </div>
+
+      <!-- GRÁFICA 2: MATRIZ DE BURBUJAS (SCATTER PLOT) -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title-box">
+            <h3><span class="wine-dot"></span> Matriz Lead Time vs. Margen % (Burbujas de Rentabilidad)</h3>
+            <p>X: Plazo (días) | Y: Margen % | Radio: Monto $. Clic en burbuja para detalle</p>
+          </div>
+          <span class="info-btn" onclick="openVariableModal('graf_scatter')">i</span>
+        </div>
+        <div class="svg-container" id="scatterChartContainer"></div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-swatch" style="background:var(--st-vencido);"></span> Vencido</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:var(--st-porvencer);"></span> Vence 19-20 Nov</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:var(--black-primary);"></span> En Tiempo</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:var(--st-facturar);"></span> Facturar</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- FILA INFERIOR AJUSTADA: 4. TIMELINE SEMANAL (ANCHO COMPLETO) -->
+    <section class="charts-row-bottom">
+      <!-- GRÁFICA 3: CRONOGRAMA DE FLUJO DE CAJA SEMANAL -->
+      <div class="chart-card" style="min-height:300px;">
+        <div class="chart-header">
+          <div class="chart-title-box">
+            <h3><span class="wine-dot"></span> Cronograma de Cobranza / Entregas por Semana</h3>
+            <p>Proyección de liberación de cartera según Fecha Compromiso. Clic en barra para ver calendario de entregas</p>
+          </div>
+          <span class="info-btn" onclick="openVariableModal('graf_timeline')">i</span>
+        </div>
+        <div class="svg-container" id="timelineChartContainer"></div>
+        <div class="chart-legend">
+          <span class="legend-item">Clic en cada columna semanal para auditar qué pedidos deben entregarse y facturarse en ese bloque de tiempo.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABLA DE DETALLE PROFUNDO -->
+    <section class="table-section">
+      <div class="table-header-bar">
+        <h3>
+          Matriz Detallada de Partidas de BackOrder
+          <span style="font-size:12px; font-weight:400; color:#D8C8CA;">(Clic en cualquier fila para abrir el Pop-up de radiografía individual)</span>
+        </h3>
+        <span id="tableCounterBadge" class="brand-badge" style="margin:0;">Mostrando 28 de 28 partidas</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th><div class="th-content">Pedido / Partida <span class="info-btn" onclick="openVariableModal('col_pedido')">i</span></div></th>
+              <th><div class="th-content">Sucursal <span class="info-btn" onclick="openVariableModal('filtro_sucursal')">i</span></div></th>
+              <th><div class="th-content">Cliente Industrial <span class="info-btn" onclick="openVariableModal('filtro_cliente')">i</span></div></th>
+              <th><div class="th-content">Servicio / Descripción <span class="info-btn" onclick="openVariableModal('col_articulo')">i</span></div></th>
+              <th><div class="th-content">F. Orig / Compromiso <span class="info-btn" onclick="openVariableModal('col_fechas')">i</span></div></th>
+              <th><div class="th-content">Estatus <span class="info-btn" onclick="openVariableModal('filtro_estatus')">i</span></div></th>
+              <th><div class="th-content">Sol / Falt / Trán <span class="info-btn" onclick="openVariableModal('col_inventario')">i</span></div></th>
+              <th class="num-col"><div class="th-content" style="justify-content:flex-end;">Total Venta <span class="info-btn" onclick="openVariableModal('col_finanzas')">i</span></div></th>
+              <th class="num-col"><div class="th-content" style="justify-content:flex-end;">Margen % <span class="info-btn" onclick="openVariableModal('kpi_margen')">i</span></div></th>
+              <th><div class="th-content">Proveedor / Comprador <span class="info-btn" onclick="openVariableModal('col_finanzas')">i</span></div></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APARTADO INFERIOR: RECOMENDACIONES DE CAMPO Y TOMA DE DECISIONES -->
+    <section class="field-guide-section">
+      <div class="field-guide-header">
+        <h2>Manual de Campo: Cómo Usar este Análisis para Tomar Decisiones Relevantes</h2>
+        <p>Guía práctica por rol para convertir las gráficas y datos en acciones inmediatas de flujo de caja, compras y servicio al cliente.</p>
+      </div>
+
+      <div class="tabs-bar">
+        <button class="tab-btn active" onclick="switchTab(event, 'tab_dir')">1. Dirección General y Finanzas</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab_comp')">2. Compras y Expeditación de Talleres</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab_com')">3. Comercial y Atención a Planta (KAM)</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab_ops')">4. Operaciones, Almacén y Facturación</button>
+      </div>
+
+      <div id="tab_dir" class="tab-content active">
+        <div class="decision-grid">
+          <div class="decision-card">
+            <h4>1. Captura de Liquidez Inmediata ($109,837 MXN)</h4>
+            <p>En la <strong>Dona de Estatus</strong>, el segmento verde muestra 7 partidas que ya tienen existencia física y bandera <code>FACTURAR</code>.</p>
+            <ul>
+              <li><strong>Acción Directa:</strong> Solicitar hoy al área de Facturación y Ventas el cierre documental de Caterpillar ($65.5K), Daimler ($30.9K) y Galería ($11.7K).</li>
+              <li><strong>Resultado:</strong> Conversión inmediata a efectivo sin esperar a proveedores.</li>
+            </ul>
+          </div>
+          <div class="decision-card black-border">
+            <h4>2. Gestión de Cuentas Estratégicas</h4>
+            <p>Hill-Rom (41.7%), Prolec-GE (23.1%) y Mazda (11.2%) concentran el 76% de toda la venta en este reporte.</p>
+            <ul>
+              <li><strong>Decisión Ejecutiva:</strong> Asignar seguimiento gerencial directo a las entregas de estas 3 cuentas clave.</li>
+              <li><strong>Impacto:</strong> Asegurar estos 3 clientes garantiza tres cuartas partes del presupuesto de servicios.</li>
+            </ul>
+          </div>
+          <div class="decision-card">
+            <h4>3. Control de Rentabilidad vs. Plazos (24.09% Margen)</h4>
+            <p>En la <strong>Matriz de Burbujas</strong> se observa que ninguna partida tiene margen inferior al 12%, pero los proyectos con plazos mayores a 35 días concentran alto capital.</p>
+            <ul>
+              <li><strong>Política recomendada:</strong> En proyectos mayores a $100,000 MXN y plazos &gt;30 días (como Mazda o Hill-Rom), pactar anticipos o pagos parciales contra avance para no financiar con capital de trabajo de FINSA.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab_comp" class="tab-content">
+        <div class="decision-grid">
+          <div class="decision-card">
+            <h4>1. Auditoría de Capacidad de Talleres</h4>
+            <p>El 100% de las órdenes de compra ya fueron colocadas (<code>Comprar = 0</code>); el riesgo real está en la capacidad del taller del proveedor.</p>
+            <ul>
+              <li><strong>David Segura Rodríguez ($299.5K):</strong> Tiene 5 fixtures de Hill-Rom simultáneos. Mayela Ortiz debe verificar capacidad instalada hoy para evitar cuellos de botella.</li>
+              <li><strong>Washtech ($75.7K):</strong> Vence hoy tras 42 días de fabricación. Confirmar embarque físico hoy mismo.</li>
+            </ul>
+          </div>
+          <div class="decision-card black-border">
+            <h4>2. Corrección de Desfases entre Fecha Cliente y Fecha OC</h4>
+            <p>Al inspeccionar el campo <code>Compras</code> en los Pop-ups de la tabla, se detectan órdenes donde el proveedor tiene fecha promesa posterior a la del cliente:</p>
+            <ul>
+              <li><strong>Caso Meritor (Pedido MTY01 354324 - $14.2K):</strong> Fecha cliente = <code>26-Nov</code> vs. Fecha OC proveedor Marcelo Márquez = <code>16-Dic</code> (20 días de desfase). Renegociar tiempo de fabricación hoy.</li>
+              <li><strong>Caso Martinrea (Pedidos C01 95540 y 95545 - $34.6K):</strong> Vencieron con cliente el <code>11-Nov</code>, pero la OC interna se colocó el <code>12-Nov</code> con promesa al <code>22-Nov</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab_com" class="tab-content">
+        <div class="decision-grid">
+          <div class="decision-card">
+            <h4>1. Gestión Proactiva de las 6 Partidas Vencidas ($122.5K)</h4>
+            <p>Usar el filtro <strong>Estatus = Vencido Crítico</strong> antes de visitar planta:</p>
+            <ul>
+              <li><strong>Roberto Carrera (Prolec-GE):</strong> Informar estatus de reparación del levantador magnético ($59.5K vencido el 18-Nov) y confirmar que el Rack de $217.3K sigue firme para el 8-Dic.</li>
+              <li><strong>Julio Quintero (International Motors):</strong> Coordinar ventana de mantenimiento en planta para concluir las 2 instalaciones de tubería y válvulas ($24.5K).</li>
+            </ul>
+          </div>
+          <div class="decision-card black-border">
+            <h4>2. Uso del Cronograma Semanal con el Cliente</h4>
+            <p>La gráfica de flujo semanal agrupa las entregas por bloques temporales.</p>
+            <ul>
+              <li><strong>En campo:</strong> Compartir con los ingenieros de planta de Hill-Rom y Danfoss el calendario semanal de arribo de fixtures para que programen sus paros de línea o recepciones técnicas sin fricciones.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab_ops" class="tab-content">
+        <div class="decision-grid">
+          <div class="decision-card">
+            <h4>1. Protocolo "Hoja de Servicio Firmada" en Almacén</h4>
+            <p>En la familia <code>SERVICIOS DE TODO TIPO</code>, el mayor retraso administrativo ocurre cuando el contratista termina el trabajo en planta pero no entrega evidencia firmada a FINSA.</p>
+            <ul>
+              <li><strong>Regla Operativa:</strong> Condicionar el pago de la factura del proveedor (ej. Marlex, Juan Eduardo Triana, Cerrajería Marín) a la entrega del acta de conformidad firmada por el usuario de la planta cliente.</li>
+            </ul>
+          </div>
+          <div class="decision-card black-border">
+            <h4>2. Depuración de Tránsitos Compartidos en ERP</h4>
+            <p>Revisar en sistema las partidas que comparten la misma OC de compra:</p>
+            <ul>
+              <li><strong>SKF Industrial (3 pedidos de bordado):</strong> Conciliar las 16 piezas en tránsito de las OC <code>227923</code> y <code>227924</code>.</li>
+              <li><strong>Hill-Rom (Pedidos 348075 y 348076):</strong> Ambos apuntan a la OC <code>223957</code> por 2 piezas de fibra de vidrio ($129.3K combinados). Asegurar asignación correcta al ingresar a M01G.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- MODAL POP-UP CENTRAL -->
+  <div class="modal-overlay" id="infoModal" onclick="closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modalTitle">Detalle Analítico</h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const CUTOFF_DATE = "2026-11-19";
+
+    // DATOS COMPLETOS DEL ARCHIVO BackOrder_Datos.xlsx
+    const rawData = [
+      { pedido: "MTY01 350905", partida: 1, almacen: "M01G", articulo: "900-00-02-112", desc: "REPARACION DE LEVANTADOR MAGNETICO PERMANENTE DIMAG 1000", fOrig: "2026-10-28", fComp: "2026-11-18", ocCliente: "D40020839", cteId: "101652", cliente: "PROLEC-GE INTERNACIONAL", exist: 0, sol: 7, disp: 0, falt: 7, trans: 7, comp: 0, costo: 5000, precio: 8500, total: 59500, agente: "43 Roberto Carrera", clasif: "U", familia: "SERVICIOS DE TODO TIPO", edp: ".", provId: "11063", proveedor: "MEDRANO MAGNETICS S.A. DE C.V.", compId: "7", comprador: "MAYELA ORTIZ JUAREZ", facturar: "FALSE", comprasInfo: "(MTY01 225799 28/10/2026 --29/10/2026 --7 MAYELA ORTIZ JUAREZ 7.00)" },
+      { pedido: "C01 95254", partida: 2, almacen: "C01G", articulo: "900-00-02-982", desc: "REPARACION DE SELLO MECANICO SENCILLO CPMPX1750EGXVS", fOrig: "2026-11-05", fComp: "2027-01-15", ocCliente: "190543", cteId: "117372", cliente: "MAZDA MOTOR MANUFACTURING DE MEXICO", exist: 0, sol: 2, disp: 0, falt: 2, trans: 2, comp: 0, costo: 48920, precio: 67487.8, total: 134975.6, agente: "143 Juan Jose Velazquez", clasif: "U", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "15530", proveedor: "VIRIDIANA YASMIN LOMA TELLEZ", compId: "13", comprador: "IMELDA SAVEEDRA", facturar: "FALSE", comprasInfo: "(C01 67614 ALICIA 06/11/2026 --16/11/2026 --13 IMELDA SAVEEDRA 2.00)" },
+      { pedido: "MTY01 353557", partida: 1, almacen: "M01G", articulo: "900-00-19-747", desc: "CORTE DE VARILLA CORRUGADA 5/8\"", fOrig: "2026-11-12", fComp: "2026-11-20", ocCliente: "SERVICIO CORTE", cteId: "102146", cliente: "MAHLE COMPONENTES DE MOTOR DE MEXICO", exist: 0, sol: 350, disp: 0, falt: 350, trans: 350, comp: 0, costo: 11, precio: 13, total: 4550, agente: "105 Alba Espinoza", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "S/M", provId: "18674", proveedor: "SERGIO CASTILLO GARCIA", compId: "7", comprador: "MAYELA ORTIZ JUAREZ", facturar: "FALSE", comprasInfo: "(MTY01 227518 12/11/2026 --13/11/2026 --7 MAYELA ORTIZ JUAREZ 350.00)" },
+      { pedido: "C01 95021", partida: 3, almacen: "C01G", articulo: "900-06-16-021", desc: "CONFIGURACION DE FRECUENCIA DE RADIO", fOrig: "2026-10-30", fComp: "2026-11-06", ocCliente: "4100066279", cteId: "2740", cliente: "TRANSMISIONES Y EQUIPOS MECANICOS", exist: 4, sol: 4, disp: 0, falt: 0, trans: 0, comp: 0, costo: 150, precio: 384.7, total: 1538.8, agente: "143 Juan Jose Velazquez", clasif: "U", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "15284", proveedor: "JAVIER ELIAS TAFOLLA NARANJO", compId: "13", comprador: "IMELDA SAVEEDRA", facturar: "FACTURAR", comprasInfo: "Servicio ejecutado / En existencia para facturar" },
+      { pedido: "MTY01 351747", partida: 1, almacen: "M01G", articulo: "900-07-46-407", desc: "RACK ESTRUCTURAL CARTON FLOW 48\" X 40\" X 67\" 4 NIVELES DE CARGA CAP 1600 KG", fOrig: "2026-11-03", fComp: "2026-12-08", ocCliente: "I40012841", cteId: "101652", cliente: "PROLEC-GE INTERNACIONAL", exist: 0, sol: 4, disp: 0, falt: 4, trans: 4, comp: 0, costo: 45174, precio: 54320, total: 217280, agente: "43 Roberto Carrera", clasif: "U", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "11831", proveedor: "RACKART DEL NORTE S.A. DE C.V.", compId: "3", comprador: "AILEEN DE LA GARZA", facturar: "FALSE", comprasInfo: "(MTY01 226322 03/11/2026 --04/11/2026 --3 AILEEN DE LA GARZA 4.00)" },
+      { pedido: "MTY01 347821", partida: 1, almacen: "M01G", articulo: "S-101531-0067", desc: "PLANTILLA DE SUBENSABLE", fOrig: "2026-10-09", fComp: "2026-11-20", ocCliente: "4414350915", cteId: "101531", cliente: "DANFOSS INDUSTRIES", exist: 0, sol: 1, disp: 0, falt: 1, trans: 1, comp: 0, costo: 59043.3064, precio: 75724.183, total: 75724.183, agente: "163 Ruth Espinoza", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "18993", proveedor: "WASHTECH SA DE CV", compId: "7", comprador: "MAYELA ORTIZ JUAREZ", facturar: "FALSE", comprasInfo: "(MTY01 223836 09/10/2026 --10/10/2026 --7 MAYELA ORTIZ JUAREZ 1.00)" },
+      { pedido: "N04 10219", partida: 1, almacen: "X02CE", articulo: "S-115371-0114", desc: "SERVICIO DE STAFF MEETING/ CELEBRACION FIN DE AÑO", fOrig: "2026-11-17", fComp: "2026-11-30", ocCliente: "3487152866", cteId: "115371", cliente: "DAIMLER VEHICULOS COMERCIALES MEXICO", exist: 1, sol: 1, disp: 0, falt: 0, trans: 0, comp: 0, costo: 25960, precio: 30904.77, total: 30904.77, agente: "219 Fernando Sauceda", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "30994", proveedor: "HERIBERTO GONZALEZ GARCIA", compId: "9", comprador: "FERNANDO SAUCEDA", facturar: "FACTURAR", comprasInfo: "Servicio acreditado listo para facturación" },
+      { pedido: "C01 95540", partida: 1, almacen: "C01G", articulo: "S-115668-043", desc: "RENTA DE PLATAFORMA DE TIJERA JCPT0807AC BATERIA DE LITIO 8 M ALTURA DE TRABAJO", fOrig: "2026-11-10", fComp: "2026-11-11", ocCliente: "800050015", cteId: "115668", cliente: "MARTINREA HONSEL MEXICO", exist: 0, sol: 1, disp: 0, falt: 1, trans: 1, comp: 0, costo: 14001, precio: 20666.67, total: 20666.67, agente: "372 JUAN SALVADOR ZAMORA", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "16292", proveedor: "T MAQUINARIA SA DE CV", compId: "13", comprador: "IMELDA SAVEEDRA", facturar: "FALSE", comprasInfo: "(C01 67831 CRISTINA 12/11/2026 --22/11/2026 --13 IMELDA SAVEEDRA 1.00)" },
+      { pedido: "MTY01 353650", partida: 1, almacen: "M01G", articulo: "S-115772-0129", desc: "FABRICACION DE FIXTURE MEDIDAS SEGÚN MUESTRA MATERIAL NYLAMID", fOrig: "2026-11-12", fComp: "2026-11-23", ocCliente: "CO2238825", cteId: "115772", cliente: "HILL-ROM DE MEXICO", exist: 0, sol: 1, disp: 0, falt: 1, trans: 1, comp: 0, costo: 26500, precio: 35333.33, total: 35333.33, agente: "423 ANGELA FRANCIS SOLIS OVIEDO", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "18967", proveedor: "DAVID SEGURA RODRIGUEZ", compId: "7", comprador: "MAYELA ORTIZ JUAREZ", facturar: "FALSE", comprasInfo: "(MTY01 227552 12/11/2026 --13/11/2026 --7 MAYELA ORTIZ JUAREZ 1.00)" },
+      { pedido: "MTY01 353179", partida: 1, almacen: "M01G", articulo: "S-115772-0135", desc: "FABRICACION DE FUELLE PARA MESA LARGO 1350MM ANCHO 710MM CARRERA MAXIMA", fOrig: "2026-11-10", fComp: "2026-12-07", ocCliente: "CO2234557", cteId: "115772", cliente: "HILL-ROM DE MEXICO", exist: 0, sol: 10, disp: 0, falt: 10, trans: 10, comp: 0, costo: 15000, precio: 20000, total: 200000, agente: "423 ANGELA FRANCIS SOLIS OVIEDO", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "18989", proveedor: "JCW SOLUCIONES PARA LA INDUSTRIA", compId: "5", comprador: "MICHELL RODRIGUEZ", facturar: "FALSE", comprasInfo: "(MTY01 227315 11/11/2026 --12/11/2026 --5 MICHELL RODRIGUEZ 10.00)" },
+      { pedido: "MTY01 353650", partida: 2, almacen: "M01G", articulo: "S-115772-0142", desc: "FABRICACION DE FIXTURE PARA SOLDAR ETIQUETA MEDIDA SEGÚN MUESTRA, ALUMINIO 6063", fOrig: "2026-11-12", fComp: "2026-11-23", ocCliente: "CO2238825", cteId: "115772", cliente: "HILL-ROM DE MEXICO", exist: 0, sol: 1, disp: 0, falt: 1, trans: 1, comp: 0, costo: 23500, precio: 31333.33, total: 31333.33, agente: "423 ANGELA FRANCIS SOLIS OVIEDO", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "18967", proveedor: "DAVID SEGURA RODRIGUEZ", compId: "7", comprador: "MAYELA ORTIZ JUAREZ", facturar: "FALSE", comprasInfo: "(MTY01 227552 12/11/2026 --13/11/2026 --7 MAYELA ORTIZ JUAREZ 1.00)" },
+      { pedido: "MTY01 348075", partida: 1, almacen: "M01G", articulo: "S-115772-0143", desc: "FABRICACION DE FIXTURE SEGÚN MUESTRA MATERIAL PTR FIBRA DE VIDRIO 1 1/2 X 2.40MTS", fOrig: "2026-10-12", fComp: "2026-11-30", ocCliente: "CO2203238", cteId: "115772", cliente: "HILL-ROM DE MEXICO", exist: 0, sol: 1, disp: 0, falt: 1, trans: 2, comp: 0, costo: 48500, precio: 64666.67, total: 64666.67, agente: "423 ANGELA FRANCIS SOLIS OVIEDO", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "18967", proveedor: "DAVID SEGURA RODRIGUEZ", compId: "7", comprador: "MAYELA ORTIZ JUAREZ", facturar: "FALSE", comprasInfo: "(MTY01 223957 12/10/2026 --13/10/2026 --7 MAYELA ORTIZ JUAREZ 2.00)" },
+      { pedido: "MTY01 348076", partida: 1, almacen: "M01G", articulo: "S-115772-0143", desc: "FABRICACION DE FIXTURE SEGÚN MUESTRA MATERIAL PTR FIBRA DE VIDRIO 1 1/2 X 2.40MTS", fOrig: "2026-10-12", fComp: "2026-11-30", ocCliente: "CO2212099", cteId: "115772", cliente: "HILL-ROM DE MEXICO", exist: 0, sol: 1, disp: 0, falt: 2, trans: 2, comp: 0, costo: 48500, precio: 64666.67, total: 64666.67, agente: "423 ANGELA FRANCIS SOLIS OVIEDO", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "18967", proveedor: "DAVID SEGURA RODRIGUEZ", compId: "7", comprador: "MAYELA ORTIZ JUAREZ", facturar: "FALSE", comprasInfo: "(MTY01 223957 12/10/2026 --13/10/2026 --7 MAYELA ORTIZ JUAREZ 2.00)" },
+      { pedido: "MTY01 353652", partida: 1, almacen: "M01G", articulo: "S-115772-0145", desc: "FABRICACION DE FIXTURE MX 2694 MEDIDAS E INDICACIONES Y MUESTRA CLIENTE", fOrig: "2026-11-12", fComp: "2026-12-07", ocCliente: "CO2238826", cteId: "115772", cliente: "HILL-ROM DE MEXICO", exist: 0, sol: 1, disp: 0, falt: 1, trans: 1, comp: 0, costo: 77600, precio: 103466.66, total: 103466.66, agente: "423 ANGELA FRANCIS SOLIS OVIEDO", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "18967", proveedor: "DAVID SEGURA RODRIGUEZ", compId: "7", comprador: "MAYELA ORTIZ JUAREZ", facturar: "FALSE", comprasInfo: "(MTY01 227552 12/11/2026 --13/11/2026 --7 MAYELA ORTIZ JUAREZ 1.00)" },
+      { pedido: "MTY01 353392", partida: 1, almacen: "M01G", articulo: "S-115772-060", desc: "APERTURA DE CHAPA DE GABINETE Y VENTA E INSTALACIÓN DE CHAPA PARA GABINETE", fOrig: "2026-11-11", fComp: "2026-11-25", ocCliente: "CO2235285", cteId: "115772", cliente: "HILL-ROM DE MEXICO", exist: 0, sol: 1, disp: 0, falt: 1, trans: 1, comp: 0, costo: 480, precio: 600, total: 600, agente: "423 ANGELA FRANCIS SOLIS OVIEDO", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "10504", proveedor: "CERRAJERIA MARIN, S.A. DE C.V.", compId: "2", comprador: "KARLA NAVARRO", facturar: "FALSE", comprasInfo: "(MTY01 227530 12/11/2026 --13/11/2026 --2 KARLA NAVARRO 1.00)" },
+      { pedido: "MTY01 353816", partida: 1, almacen: "M01G", articulo: "S-116080-0004", desc: "SUMINISTRO E INSTALACION DE 3 DESTORCEDORES Z DE 1/4 PARA MANIOBRAR PISTOLA SILICON", fOrig: "2026-11-13", fComp: "2026-11-18", ocCliente: "SERVICIO COMPLEMENTO TUBERIA", cteId: "116080", cliente: "INTERNATIONAL MOTORS MEXICO CV", exist: 0, sol: 3, disp: 0, falt: 3, trans: 3, comp: 0, costo: 2950, precio: 3933.33, total: 11799.99, agente: "380 JULIO QUINTERO URRUTIA", clasif: "SM", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "30986", proveedor: "JUAN EDUARDO TRIANA PEREZ", compId: "8", comprador: "NAYELI CONTRERAS", facturar: "FALSE", comprasInfo: "(MTY01 227687 13/11/2026 --14/11/2026 --8 NAYELI CONTRERAS 3.00)" },
+      { pedido: "MTY01 353816", partida: 2, almacen: "M01G", articulo: "S-116080-0005", desc: "INSTALACION DE VALVULAS Y MANGUERA DE 1/2 CON SOPORTERIA, RETIRO DE MANGUERAS 3/4", fOrig: "2026-11-13", fComp: "2026-11-18", ocCliente: "SERVICIO COMPLEMENTO TUBERIA", cteId: "116080", cliente: "INTERNATIONAL MOTORS MEXICO CV", exist: 0, sol: 1, disp: 0, falt: 1, trans: 1, comp: 0, costo: 9500, precio: 12666.66, total: 12666.66, agente: "380 JULIO QUINTERO URRUTIA", clasif: "SM", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "30986", proveedor: "JUAN EDUARDO TRIANA PEREZ", compId: "8", comprador: "NAYELI CONTRERAS", facturar: "FALSE", comprasInfo: "(MTY01 227687 13/11/2026 --14/11/2026 --8 NAYELI CONTRERAS 1.00)" },
+      { pedido: "C01 95563", partida: 1, almacen: "C01G", articulo: "S-117217-011", desc: "STOP DE ALUMINIO MOD. 16811", fOrig: "2026-11-10", fComp: "2026-11-20", ocCliente: "53187472", cteId: "117217", cliente: "SCHAEFFLER MEXICO", exist: 0, sol: 5, disp: 0, falt: 5, trans: 5, comp: 0, costo: 3500, precio: 4118, total: 20590, agente: "234 JOYCE GONZALEZ", clasif: "SS", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "18842", proveedor: "PRIMS TOOLING", compId: "13", comprador: "IMELDA SAVEEDRA", facturar: "FALSE", comprasInfo: "(C01 67723 CLAUDIA 10/11/2026 --20/11/2026 --13 IMELDA SAVEEDRA 6.00)" },
+      { pedido: "MTY01 354324", partida: 1, almacen: "M01G", articulo: "S-117938-0001", desc: "ESTRUCTURA METÁLICA PARA SOPORTE DE REFUERZO DE NUEVA CORTINA RÁPIDA EN LAB CDTH", fOrig: "2026-11-18", fComp: "2026-11-26", ocCliente: "FRANCISCO MALTOS", cteId: "117938", cliente: "MERITOR MEXICO", exist: 0, sol: 1, disp: 0, falt: 1, trans: 1, comp: 0, costo: 9800, precio: 14243.24, total: 14243.24, agente: "380 JULIO QUINTERO URRUTIA", clasif: "SS", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "19007", proveedor: "MARCELO GERARDO MARQUEZ TREVIÑO", compId: "2", comprador: "KARLA NAVARRO", facturar: "FALSE", comprasInfo: "(MTY01 228107 18/11/2026 --16/12/2026 --2 KARLA NAVARRO 1.00)" },
+      { pedido: "C01 94345", partida: 1, almacen: "C01G", articulo: "S-118280-001", desc: "FABRICACION SUMINISTRO E INSTALACION DE ESCRITORIO ESTRUCTURAL PTR 168 X 122 X 110CM", fOrig: "2026-10-21", fComp: "2026-11-10", ocCliente: "3301324451", cteId: "118280", cliente: "GALERIA PRODUCTORA DE COSMETICOS", exist: 1, sol: 1, disp: 0, falt: 0, trans: 0, comp: 0, costo: 9390, precio: 11740, total: 11740, agente: "234 JOYCE GONZALEZ", clasif: "SE", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "16546", proveedor: "EDUARDO ULISES LEON GOMEZ", compId: "13", comprador: "IMELDA SAVEEDRA", facturar: "FACTURAR", comprasInfo: "Entregado / En existencia listo para facturar" },
+      { pedido: "MTY01 353736", partida: 1, almacen: "M01G", articulo: "S-2332-0004", desc: "LAVADO PROFUNDO DE ALFOMBRA", fOrig: "2026-11-12", fComp: "2026-11-19", ocCliente: "I002776043", cteId: "2332", cliente: "CATERPILLAR INDUSTRIAS MEXICO", exist: 1595.8, sol: 1123, disp: 472.8, falt: 0, trans: 0, comp: 0, costo: 24.5, precio: 41.54, total: 46649.42, agente: "385 JOSE ANGEL ROSALES CASTILLEJA", clasif: "SL", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "18647", proveedor: "MARLEX SERVICIOS PROFESIONALES SA DE CV", compId: "7", comprador: "MAYELA ORTIZ JUAREZ", facturar: "FACTURAR", comprasInfo: "Existencia acreditada lista para facturar" },
+      { pedido: "MTY01 353736", partida: 2, almacen: "M01G", articulo: "S-2332-0004", desc: "LAVADO PROFUNDO DE ALFOMBRA", fOrig: "2026-11-12", fComp: "2026-11-19", ocCliente: "I002776043", cteId: "2332", cliente: "CATERPILLAR INDUSTRIAS MEXICO", exist: 1595.8, sol: 170, disp: 302.8, falt: 0, trans: 0, comp: 0, costo: 24.5, precio: 36.92, total: 6276.4, agente: "385 JOSE ANGEL ROSALES CASTILLEJA", clasif: "SL", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "18647", proveedor: "MARLEX SERVICIOS PROFESIONALES SA DE CV", compId: "7", comprador: "MAYELA ORTIZ JUAREZ", facturar: "FACTURAR", comprasInfo: "Existencia acreditada lista para facturar" },
+      { pedido: "MTY01 354014", partida: 1, almacen: "M01G", articulo: "S-2332-0004", desc: "LAVADO PROFUNDO DE ALFOMBRA", fOrig: "2026-11-17", fComp: "2026-11-18", ocCliente: "I002776043", cteId: "2332", cliente: "CATERPILLAR INDUSTRIAS MEXICO", exist: 1595.8, sol: 302.8, disp: 0, falt: 0, trans: 0, comp: 0, costo: 24.5, precio: 41.54, total: 12578.312, agente: "385 JOSE ANGEL ROSALES CASTILLEJA", clasif: "SL", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "18647", proveedor: "MARLEX SERVICIOS PROFESIONALES SA DE CV", compId: "7", comprador: "MAYELA ORTIZ JUAREZ", facturar: "FACTURAR", comprasInfo: "Existencia acreditada lista para facturar" },
+      { pedido: "C01 95545", partida: 1, almacen: "C01G", articulo: "S-2499-001", desc: "FABRICACION DE BASES PARA MOTOR", fOrig: "2026-11-10", fComp: "2026-11-11", ocCliente: "80005107", cteId: "115668", cliente: "MARTINREA HONSEL MEXICO", exist: 0, sol: 5, disp: 0, falt: 5, trans: 5, comp: 0, costo: 2450, precio: 2785, total: 13925, agente: "372 JUAN SALVADOR ZAMORA", clasif: "SE", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "399", proveedor: "MAPAMO CIQ SA DE CV", compId: "13", comprador: "IMELDA SAVEEDRA", facturar: "FALSE", comprasInfo: "(C01 67832 CRIS 12/11/2026 --22/11/2026 --13 IMELDA SAVEEDRA 5.00)" },
+      { pedido: "MTY01 352670", partida: 1, almacen: "M01G", articulo: "S-2509-0001", desc: "SERVICIO BORDADO LOGO SKF 2.5 CM X 10 CM", fOrig: "2026-11-06", fComp: "2026-11-16", ocCliente: "4300644526 PTE BORDADO", cteId: "2633", cliente: "SKF INDUSTRIAL MEXICO", exist: 4, sol: 4, disp: 0, falt: 0, trans: 16, comp: 0, costo: 28, precio: 37.33, total: 149.32, agente: "411 CINDY ESPINOZA", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "14958", proveedor: "HILARIO HERNANDEZ SANCHEZ", compId: "5", comprador: "MICHELL RODRIGUEZ", facturar: "FACTURAR", comprasInfo: "(MTY01 227923 17/11/2026 --22/11/2026 --5 MICHELL RODRIGUEZ 6.00) (MTY01 227924 10.00)" },
+      { pedido: "MTY01 354125", partida: 1, almacen: "M01G", articulo: "S-2509-0001", desc: "SERVICIO BORDADO LOGO SKF 2.5 CM X 10 CM", fOrig: "2026-11-17", fComp: "2026-12-01", ocCliente: "4300664553 AJUSTE", cteId: "2633", cliente: "SKF INDUSTRIAL MEXICO", exist: 4, sol: 6, disp: 0, falt: 6, trans: 16, comp: 0, costo: 28, precio: 37.33, total: 223.98, agente: "411 CINDY ESPINOZA", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "14958", proveedor: "HILARIO HERNANDEZ SANCHEZ", compId: "5", comprador: "MICHELL RODRIGUEZ", facturar: "FALSE", comprasInfo: "(MTY01 227923 17/11/2026 --22/11/2026 --5 MICHELL RODRIGUEZ 6.00) (MTY01 227924 10.00)" },
+      { pedido: "MTY01 354127", partida: 1, almacen: "M01G", articulo: "S-2509-0001", desc: "SERVICIO BORDADO LOGO SKF 2.5 CM X 10 CM", fOrig: "2026-11-17", fComp: "2026-12-01", ocCliente: "4300666432 AJUSTE", cteId: "2633", cliente: "SKF INDUSTRIAL MEXICO", exist: 4, sol: 10, disp: 0, falt: 16, trans: 16, comp: 0, costo: 28, precio: 37.33, total: 373.3, agente: "411 CINDY ESPINOZA", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "", provId: "14958", proveedor: "HILARIO HERNANDEZ SANCHEZ", compId: "5", comprador: "MICHELL RODRIGUEZ", facturar: "FALSE", comprasInfo: "(MTY01 227923 17/11/2026 --22/11/2026 --5 MICHELL RODRIGUEZ 6.00) (MTY01 227924 10.00)" },
+      { pedido: "MTY01 351111", partida: 2, almacen: "M01G", articulo: "S-842-0002", desc: "CALIBRACIÓN DE PRESIÓN", fOrig: "2026-10-29", fComp: "2026-11-17", ocCliente: "4501063143", cteId: "842", cliente: "A4C-SANKIN PRECISION TUBE", exist: 0, sol: 1, disp: 0, falt: 1, trans: 1, comp: 0, costo: 2992.5, precio: 3990, total: 3990, agente: "385 JOSE ANGEL ROSALES CASTILLEJA", clasif: "SG", familia: "SERVICIOS DE TODO TIPO", edp: "0520-4000", provId: "15507", proveedor: "GRUPO DE INSTRUMENTACION Y MEDICION INDUSTRIAL DE MEXICO SA DE CV", compId: "3", comprador: "AILEEN DE LA GARZA", facturar: "FALSE", comprasInfo: "(MTY01 226012 29/10/2026 --30/10/2026 --3 AILEEN DE LA GARZA 1.00)" }
+    ];
+
+    function daysBetween(d1, d2) {
+      return Math.round((new Date(d2) - new Date(d1)) / (1000 * 60 * 60 * 24));
+    }
+
+    function getWeekBucket(dateStr) {
+      if (dateStr < "2026-11-16") return "Sem <= 15 Nov (Atraso)";
+      if (dateStr <= "2026-11-22") return "Sem 16-22 Nov (Actual)";
+      if (dateStr <= "2026-11-29") return "Sem 23-29 Nov";
+      if (dateStr <= "2026-12-06") return "Sem 30 Nov - 06 Dic";
+      if (dateStr <= "2026-12-13") return "Sem 07-13 Dic";
+      return "Ene 2027 (Largo Plazo)";
+    }
+
+    const enrichedData = rawData.map((d, idx) => {
+      const costoTotal = d.sol * d.costo;
+      const utilidad = d.total - costoTotal;
+      const margenPct = d.total > 0 ? (utilidad / d.total) * 100 : 0;
+      const leadTime = Math.max(1, daysBetween(d.fOrig, d.fComp));
+      const daysToDue = daysBetween(CUTOFF_DATE, d.fComp);
+      const weekBucket = getWeekBucket(d.fComp);
+
+      let statusKey = "EN_TIEMPO";
+      let statusLabel = "En Tiempo";
+      let statusClass = "st-entiempo";
+      let colorHex = "#262626";
+
+      if (d.facturar === "FACTURAR") {
+        statusKey = "FACTURAR";
+        statusLabel = "Listo p/ Facturar";
+        statusClass = "st-facturar";
+        colorHex = "#1B5E20";
+      } else if (d.fComp < CUTOFF_DATE) {
+        statusKey = "VENCIDO";
+        statusLabel = "Vencido Crítico";
+        statusClass = "st-vencido";
+        colorHex = "#9E1B32";
+      } else if (d.fComp === "2026-11-19" || d.fComp === "2026-11-20") {
+        statusKey = "POR_VENCER";
+        statusLabel = "Vence 19-20 Nov";
+        statusClass = "st-porvencer";
+        colorHex = "#B25E00";
+      }
+
+      return { ...d, id: idx, costoTotal, utilidad, margenPct, leadTime, daysToDue, weekBucket, statusKey, statusLabel, statusClass, colorHex };
+    });
+
+    let currentFiltered = [...enrichedData];
+
+    // EXPLICACIONES DE POP-UP PARA ICONOS (i)
+    const variableExplanations = {
+      logica_general: {
+        title: "Arquitectura Analítica del Tablero de BackOrder (FINSA)",
+        what: "Integra 3 modelos gráficos interactivos con la base de datos de 28 partidas de la división 'SERVICIOS DE TODO TIPO' al corte del 19 de noviembre de 2026.",
+        logic: "1) La Dona separa la liquidez inmediata del riesgo operativo. 2) El Scatter Plot evalúa si los plazos largos están adecuadamente compensados por margen bruto. 3) El Cronograma Semanal proyecta el flujo de facturación.",
+        impact: "Cualquier clic sobre un elemento gráfico abre un Pop-up de diagnóstico con las órdenes exactas involucradas y permite filtrar todo el tablero."
+      },
+      graf_dona: {
+        title: "Gráfica 1: Dona Interactiva de Salud de Cartera",
+        what: "Divide el valor total del BackOrder en los 4 estados clave del ciclo de servicio.",
+        logic: "Calcula el peso porcentual de cada estado sobre el total filtrado. El centro muestra el valor monetario activo. Al hacer clic en cualquier arco, se despliega el listado de pedidos que integran ese bloque.",
+        impact: "Permite a Dirección distinguir cuánto del BackOrder es un éxito por facturar ($109.8K) versus cuánto es un problema real de atraso ($122.5K)."
+      },
+      graf_scatter: {
+        title: "Gráfica 2: Matriz de Burbujas (Lead Time vs. Margen % vs. Monto $)",
+        what: "Gráfica multivariable donde cada burbuja es una partida: el Eje X son los días de plazo prometido (Fecha Compromiso - Fecha Original), el Eje Y es el Margen Bruto (%) y el área del círculo representa el valor en pesos.",
+        logic: "Permite detectar proyectos de alta exposición: burbujas grandes a la derecha (plazos de 35 a 71 días) o burbujas rojas (vencidas) con buen margen que urge rescatar.",
+        impact: "Ayuda a Dirección Comercial a fijar políticas de precios: a mayor complejidad y plazo de fabricación, mayor debe ser el margen exigido."
+      },
+      graf_timeline: {
+        title: "Gráfica 3: Cronograma Semanal de Flujo de Efectivo",
+        what: "Agrupa las partidas en bloques semanales según su Fecha Compromiso de entrega.",
+        logic: "Muestra cuándo debe destrabarse el dinero: lo que viene arrastrado de semanas previas, lo que vence en la semana actual (16-22 Nov) y las grandes entregas del 23-29 Nov, 30 Nov-06 Dic y 07-13 Dic.",
+        impact: "Le da a Tesorería y Operaciones un calendario claro de ingresos proyectados semana por semana."
+      },
+      kpi_total: { title: "Valor Total en Cartera", what: "Suma de la columna 'Total' (Solicitada × Precio).", logic: "Total global: $1,200,412.31 MXN en 28 partidas.", impact: "Dimensiona el ingreso total retenido en el proceso de servicios." },
+      kpi_margen: { title: "Utilidad Bruta y Margen %", what: "Diferencia entre la Venta Total y el Costo Directo de Compra.", logic: "Utilidad global: $289,192.40 MXN (24.09% sobre venta).", impact: "Mide la creación de valor real de la división de Servicios antes de gastos operativos." },
+      kpi_facturar: { title: "Listo para Facturar (Quick Win)", what: "Partidas con estatus 'FACTURAR' y existencia disponible.", logic: "$109,837.02 MXN en 7 pedidos.", impact: "Facturación ejecutable hoy mismo." },
+      kpi_vencido: { title: "BackOrder Vencido Crítico", what: "Partidas no facturadas con Fecha Compromiso < 19 de noviembre de 2026.", logic: "$122,548.32 MXN en 6 partidas (10.21% de la cartera).", impact: "Prioridad número 1 de rescate operativo." },
+      kpi_porvencer: { title: "Alerta Vence 19-20 Noviembre", what: "Partidas pendientes que vencen hoy o mañana.", logic: "$100,864.18 MXN en 3 partidas (Danfoss, Schaeffler, Mahle).", impact: "Actuar hoy evita que pasen a cartera vencida." },
+      kpi_entiempo: { title: "BackOrder En Tiempo", what: "Partidas con Fecha Compromiso posterior al 20 de noviembre.", logic: "$867,162.79 MXN en 12 partidas (72.24% del total).", impact: "Cartera sana en proceso de manufactura o servicio." },
+      filtro_sucursal: { title: "Sucursal / Almacén", what: "Centro operativo: M01G (Monterrey), C01G (Bajío) y X02CE (N04).", logic: "Monterrey concentra el 79.7% del valor.", impact: "Segmenta la operación por gerencia regional." },
+      filtro_estatus: { title: "Estatus Operativo", what: "Estado calculado al corte del 19 de noviembre de 2026.", logic: "Cruza la columna 'Facturar' y 'Fecha Compromiso'.", impact: "Enfoca las juntas diarias por nivel de urgencia." },
+      filtro_cliente: { title: "Cliente Industrial", what: "Empresa compradora del servicio o proyecto.", logic: "15 cuentas industriales activas.", impact: "Permite aislar el estado de cuenta de un cliente específico." },
+      filtro_comprador: { title: "Comprador Asignado", what: "Responsable en Compras de dar seguimiento al proveedor.", logic: "5 compradores activos con el 100% de OCs colocadas.", impact: "Asigna responsabilidades directas de expeditación." },
+      filtro_agente: { title: "Agente Comercial", what: "Ejecutivo de cuenta responsable frente al cliente.", logic: "8 agentes comerciales activos.", impact: "Coordina la comunicación con planta." },
+      col_pedido: { title: "Pedido Original y OC Cliente", what: "Folio interno ERP y orden de compra del cliente.", logic: "Trazabilidad contractual.", impact: "Requerido para facturación y portal de proveedores." },
+      col_articulo: { title: "Servicio y Clasificación", what: "Código de servicio y descripción técnica.", logic: "Familia 'SERVICIOS DE TODO TIPO' (SG, U, SL, SE, SS, SM).", impact: "Define el alcance técnico a auditar." },
+      col_fechas: { title: "Fechas Original y Compromiso", what: "Ventana de tiempo pactada con el cliente.", logic: "Base para medir el OTIF (On-Time In-Full).", impact: "Controla la puntualidad de entrega." },
+      col_inventario: { title: "Balance de Inventario", what: "Solicitada vs. Existencia vs. Faltante vs. Tránsito.", logic: "Todas las partidas pendientes tienen Tránsito >= Faltante y Comprar = 0.", impact: "Confirma que las órdenes de compra ya están emitidas." },
+      col_finanzas: { title: "Total Venta y Costo", what: "Importes monetarios sin IVA.", logic: "Base del cálculo de rentabilidad.", impact: "Priorización financiera." }
+    };
+
+    function fmtCurrency(val) {
+      return "$" + val.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function fmtShort(val) {
+      if (val >= 1000000) return "$" + (val / 1000000).toFixed(2) + "M";
+      if (val >= 1000) return "$" + (val / 1000).toFixed(1) + "K";
+      return "$" + val.toFixed(0);
+    }
+
+    // TOOLTIP FLOTANTE
+    function showTooltip(evt, htmlContent) {
+      const tt = document.getElementById("chartTooltip");
+      tt.innerHTML = htmlContent;
+      tt.style.display = "block";
+      moveTooltip(evt);
+    }
+
+    function moveTooltip(evt) {
+      const tt = document.getElementById("chartTooltip");
+      const x = Math.min(window.innerWidth - 310, evt.clientX + 16);
+      const y = Math.min(window.innerHeight - 140, evt.clientY + 16);
+      tt.style.left = x + "px";
+      tt.style.top = y + "px";
+    }
+
+    function hideTooltip() {
+      document.getElementById("chartTooltip").style.display = "none";
+    }
+
+    // INICIALIZAR FILTROS
+    function initFilters() {
+      const clientes = [...new Set(enrichedData.map(d => d.cliente))].sort();
+      const compradores = [...new Set(enrichedData.map(d => d.comprador))].sort();
+      const agentes = [...new Set(enrichedData.map(d => d.agente))].sort();
+
+      clientes.forEach(c => document.getElementById("filterCliente").add(new Option(c, c)));
+      compradores.forEach(c => document.getElementById("filterComprador").add(new Option(c, c)));
+      agentes.forEach(a => document.getElementById("filterAgente").add(new Option(a, a)));
+    }
+
+    function applyFilters() {
+      const suc = document.getElementById("filterSucursal").value;
+      const st = document.getElementById("filterStatus").value;
+      const cte = document.getElementById("filterCliente").value;
+      const comp = document.getElementById("filterComprador").value;
+      const ag = document.getElementById("filterAgente").value;
+      const q = document.getElementById("filterSearch").value.toLowerCase().trim();
+
+      currentFiltered = enrichedData.filter(d => {
+        if (suc !== "ALL" && d.almacen !== suc) return false;
+        if (st !== "ALL" && d.statusKey !== st) return false;
+        if (cte !== "ALL" && d.cliente !== cte) return false;
+        if (comp !== "ALL" && d.comprador !== comp) return false;
+        if (ag !== "ALL" && d.agente !== ag) return false;
+        if (q) {
+          const hay = `${d.pedido} ${d.articulo} ${d.desc} ${d.cliente} ${d.proveedor} ${d.ocCliente} ${d.comprador}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      updateKPIs(currentFiltered);
+      renderDonutChart(currentFiltered);
+      renderScatterChart(currentFiltered);
+      renderTimelineChart(currentFiltered);
+      updateTable(currentFiltered);
+    }
+
+    function resetFilters() {
+      document.getElementById("filterSucursal").value = "ALL";
+      document.getElementById("filterStatus").value = "ALL";
+      document.getElementById("filterCliente").value = "ALL";
+      document.getElementById("filterComprador").value = "ALL";
+      document.getElementById("filterAgente").value = "ALL";
+      document.getElementById("filterSearch").value = "";
+      applyFilters();
+    }
+
+    function updateKPIs(data) {
+      const totalVal = data.reduce((a, d) => a + d.total, 0);
+      const totalCosto = data.reduce((a, d) => a + d.costoTotal, 0);
+      const totalUtil = totalVal - totalCosto;
+      const margenPct = totalVal > 0 ? (totalUtil / totalVal) * 100 : 0;
+
+      const bySt = { FACTURAR: [], VENCIDO: [], POR_VENCER: [], EN_TIEMPO: [] };
+      data.forEach(d => bySt[d.statusKey].push(d));
+
+      const sumVal = arr => arr.reduce((a, d) => a + d.total, 0);
+
+      document.getElementById("kpiTotalVal").textContent = fmtCurrency(totalVal);
+      document.getElementById("kpiTotalCount").textContent = `${data.length} partidas activas`;
+      document.getElementById("kpiMargenVal").textContent = fmtCurrency(totalUtil);
+      document.getElementById("kpiCostoSub").textContent = `Costo: ${fmtCurrency(totalCosto)}`;
+      document.getElementById("kpiMargenPct").textContent = `${margenPct.toFixed(1)}%`;
+
+      const fVal = sumVal(bySt.FACTURAR);
+      document.getElementById("kpiFacturarVal").textContent = fmtCurrency(fVal);
+      document.getElementById("kpiFacturarCount").textContent = `${bySt.FACTURAR.length} partidas`;
+      document.getElementById("kpiFacturarPct").textContent = totalVal > 0 ? `${((fVal / totalVal) * 100).toFixed(1)}%` : "0%";
+
+      const vVal = sumVal(bySt.VENCIDO);
+      document.getElementById("kpiVencidoVal").textContent = fmtCurrency(vVal);
+      document.getElementById("kpiVencidoCount").textContent = `${bySt.VENCIDO.length} atrasadas`;
+      document.getElementById("kpiVencidoPct").textContent = totalVal > 0 ? `${((vVal / totalVal) * 100).toFixed(1)}%` : "0%";
+
+      const pvVal = sumVal(bySt.POR_VENCER);
+      document.getElementById("kpiPorVencerVal").textContent = fmtCurrency(pvVal);
+      document.getElementById("kpiPorVencerCount").textContent = `${bySt.POR_VENCER.length} en límite`;
+      document.getElementById("kpiPorVencerPct").textContent = totalVal > 0 ? `${((pvVal / totalVal) * 100).toFixed(1)}%` : "0%";
+
+      const etVal = sumVal(bySt.EN_TIEMPO);
+      document.getElementById("kpiEnTiempoVal").textContent = fmtCurrency(etVal);
+      document.getElementById("kpiEnTiempoCount").textContent = `${bySt.EN_TIEMPO.length} vigentes`;
+      document.getElementById("kpiEnTiempoPct").textContent = totalVal > 0 ? `${((etVal / totalVal) * 100).toFixed(1)}%` : "0%";
+    }
+
+    // =========================================================================
+    // GRÁFICA 1: DONA INTERACTIVA SVG (SALUD DE CARTERA)
+    // =========================================================================
+    function renderDonutChart(data) {
+      const container = document.getElementById("donutChartContainer");
+      const legend = document.getElementById("donutLegend");
+      const total = data.reduce((a, d) => a + d.total, 0);
+
+      if (total === 0) {
+        container.innerHTML = `<div style="padding:40px; color:#888;">Sin datos para graficar</div>`;
+        legend.innerHTML = "";
+        return;
+      }
+
+      const groups = [
+        { key: "EN_TIEMPO", label: "En Tiempo (>20 Nov)", color: "#262626", items: data.filter(d => d.statusKey === "EN_TIEMPO") },
+        { key: "VENCIDO", label: "Vencido Crítico (<19 Nov)", color: "#9E1B32", items: data.filter(d => d.statusKey === "VENCIDO") },
+        { key: "FACTURAR", label: "Listo p/ Facturar", color: "#1B5E20", items: data.filter(d => d.statusKey === "FACTURAR") },
+        { key: "POR_VENCER", label: "Por Vencer (19-20 Nov)", color: "#B25E00", items: data.filter(d => d.statusKey === "POR_VENCER") }
+      ].map(g => ({ ...g, val: g.items.reduce((a, d) => a + d.total, 0) })).filter(g => g.val > 0);
+
+      const cx = 150, cy = 135, r = 92, strokeW = 36;
+      const circumference = 2 * Math.PI * r;
+      let offsetAccumulator = 0;
+
+      let circlesHtml = "";
+      groups.forEach(g => {
+        const pct = g.val / total;
+        const dash = pct * circumference;
+        const gap = circumference - dash;
+        const dashOffset = -offsetAccumulator;
+        offsetAccumulator += dash;
+
+        const ttHtml = `<strong>${g.label}</strong><br/>Monto: ${fmtCurrency(g.val)} (${(pct * 100).toFixed(1)}%)<br/>Partidas: ${g.items.length}<br/><em>Clic para ver desglose en Pop-up</em>`;
+
+        circlesHtml += `
+          <circle class="interactive-shape"
+            cx="${cx}" cy="${cy}" r="${r}"
+            fill="transparent"
+            stroke="${g.color}"
+            stroke-width="${strokeW}"
+            stroke-dasharray="${dash} ${gap}"
+            stroke-dashoffset="${dashOffset}"
+            transform="rotate(-90 ${cx} ${cy})"
+            onmousemove="showTooltip(event, \`${ttHtml}\`)"
+            onmouseleave="hideTooltip()"
+            onclick="openStatusDrillModal('${g.key}')"
+          />
+        `;
+      });
+
+      container.innerHTML = `
+        <svg viewBox="0 0 300 270" style="max-width:310px;">
+          ${circlesHtml}
+          <circle cx="${cx}" cy="${cy}" r="${r - strokeW/2 - 4}" fill="#FFFFFF" />
+          <text x="${cx}" y="${cy - 10}" text-anchor="middle" font-size="11" font-weight="700" fill="#777">CARTERA ACTIVA</text>
+          <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="17" font-weight="800" fill="#721121">${fmtShort(total)}</text>
+          <text x="${cx}" y="${cy + 30}" text-anchor="middle" font-size="11" font-weight="600" fill="#333">${data.length} partidas</text>
+        </svg>
+      `;
+
+      legend.innerHTML = groups.map(g => `
+        <span class="legend-item" onclick="openStatusDrillModal('${g.key}')">
+          <span class="legend-swatch" style="background:${g.color};"></span>
+          ${g.label}: <strong>${((g.val / total) * 100).toFixed(1)}%</strong>
+        </span>
+      `).join("");
+    }
+
+    // =========================================================================
+    // GRÁFICA 2: MATRIZ SCATTER PLOT (PLAZO LEAD TIME vs MARGEN % vs MONTO $)
+    // =========================================================================
+    function renderScatterChart(data) {
+      const container = document.getElementById("scatterChartContainer");
+      if (data.length === 0) {
+        container.innerHTML = `<div style="padding:30px; color:#888;">Sin datos</div>`;
+        return;
+      }
+
+      const W = 400, H = 210;
+      const padL = 44, padR = 20, padT = 20, padB = 38;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      const maxLT = Math.max(...data.map(d => d.leadTime), 30);
+      const maxMargen = Math.max(...data.map(d => d.margenPct), 45);
+      const maxTotal = Math.max(...data.map(d => d.total), 1);
+
+      const yAvgMargen = padT + plotH - (24.09 / maxMargen) * plotH;
+      const xMidLT = padL + (21 / maxLT) * plotW;
+
+      let bubblesSvg = "";
+      data.forEach(d => {
+        const cx = padL + (d.leadTime / maxLT) * plotW;
+        const cy = padT + plotH - (d.margenPct / maxMargen) * plotH;
+        const r = Math.max(5, Math.min(18, Math.sqrt(d.total / maxTotal) * 18));
+
+        const tt = `<strong>${d.pedido} (${d.cliente})</strong><br/>Servicio: ${d.articulo}<br/>Venta: <strong>${fmtCurrency(d.total)}</strong><br/>Margen: <strong>${d.margenPct.toFixed(1)}%</strong> | Plazo: <strong>${d.leadTime} días</strong><br/><em>Clic para abrir radiografía de la partida</em>`;
+
+        bubblesSvg += `
+          <circle class="interactive-shape"
+            cx="${cx}" cy="${cy}" r="${r}"
+            fill="${d.colorHex}" fill-opacity="0.78"
+            stroke="#FFFFFF" stroke-width="1.5"
+            onmousemove="showTooltip(event, \`${tt}\`)"
+            onmouseleave="hideTooltip()"
+            onclick="openRowModalById(${d.id})"
+          />
+        `;
+      });
+
+      container.innerHTML = `
+        <svg viewBox="0 0 ${W} ${H}">
+          <rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="#FAFAFA" stroke="#E5DCDD" />
+          <!-- Cuadrantes promedio -->
+          <line x1="${padL}" y1="${yAvgMargen}" x2="${padL + plotW}" y2="${yAvgMargen}" stroke="#721121" stroke-dasharray="4,3" />
+          <line x1="${xMidLT}" y1="${padT}" x2="${xMidLT}" y2="${padT + plotH}" stroke="#999" stroke-dasharray="4,3" />
+          <text x="${padL + plotW - 4}" y="${yAvgMargen - 4}" text-anchor="end" font-size="9" font-weight="700" fill="#721121">Margen Prom: 24.1%</text>
+
+          <!-- Ejes -->
+          <text x="${padL - 5}" y="${padT + 8}" text-anchor="end" font-size="9.5" fill="#555">${maxMargen.toFixed(0)}%</text>
+          <text x="${padL - 5}" y="${padT + plotH}" text-anchor="end" font-size="9.5" fill="#555">0%</text>
+          <text x="${padL}" y="${padT + plotH + 14}" font-size="9.5" fill="#555">0 d</text>
+          <text x="${padL + plotW}" y="${padT + plotH + 14}" text-anchor="end" font-size="9.5" fill="#555">${maxLT} días</text>
+          <text x="${padL + plotW/2}" y="${H - 6}" text-anchor="middle" font-size="10" font-weight="700" fill="#333">Plazo Prometido (Lead Time en Días) ➔</text>
+
+          ${bubblesSvg}
+        </svg>
+      `;
+    }
+
+    // =========================================================================
+    // GRÁFICA 3: CRONOGRAMA SEMANAL DE FLUJO DE CAJA (ANCHO COMPLETO)
+    // =========================================================================
+    function renderTimelineChart(data) {
+      const container = document.getElementById("timelineChartContainer");
+      if (data.length === 0) {
+        container.innerHTML = `<div style="padding:30px; color:#888;">Sin datos</div>`;
+        return;
+      }
+
+      const orderBuckets = [
+        "Sem <= 15 Nov (Atraso)",
+        "Sem 16-22 Nov (Actual)",
+        "Sem 23-29 Nov",
+        "Sem 30 Nov - 06 Dic",
+        "Sem 07-13 Dic",
+        "Ene 2027 (Largo Plazo)"
+      ];
+
+      const groups = orderBuckets.map(b => {
+        const items = data.filter(d => d.weekBucket === b);
+        return {
+          bucket: b,
+          items,
+          val: items.reduce((a, d) => a + d.total, 0)
+        };
+      });
+
+      const W = 800, H = 220;
+      const padL = 48, padR = 24, padT = 24, padB = 44;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+      const maxVal = Math.max(...groups.map(g => g.val), 1);
+      const stepX = plotW / groups.length;
+      const barW = Math.min(64, stepX * 0.55);
+
+      let barsSvg = "";
+      groups.forEach((g, i) => {
+        const xC = padL + i * stepX + stepX / 2;
+        const barH = (g.val / maxVal) * plotH;
+        const y = padT + plotH - barH;
+        const color = i === 0 ? "#9E1B32" : i === 1 ? "#B25E00" : "#721121";
+        const tt = `<strong>${g.bucket}</strong><br/>Flujo Esperado: <strong>${fmtCurrency(g.val)}</strong><br/>Partidas que vencen: ${g.items.length}<br/><em>Clic para ver calendario de esa semana</em>`;
+
+        barsSvg += `
+          <rect class="interactive-shape"
+            x="${xC - barW/2}" y="${y}" width="${barW}" height="${Math.max(3, barH)}"
+            rx="5" fill="${color}"
+            onmousemove="showTooltip(event, \`${tt}\`)"
+            onmouseleave="hideTooltip()"
+            onclick="openWeekDrillModal('${g.bucket}')"
+          />
+          <text x="${xC}" y="${y - 5}" text-anchor="middle" font-size="10" font-weight="700" fill="${color}">${fmtCurrency(g.val)}</text>
+          <text x="${xC}" y="${padT + plotH + 15}" text-anchor="middle" font-size="10" font-weight="700" fill="#333">${g.bucket.replace(" (Actual)","").replace(" (Atraso)","").replace(" (Largo Plazo)","")}</text>
+        `;
+      });
+
+      container.innerHTML = `
+        <svg viewBox="0 0 ${W} ${H}">
+          <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="#CCC" />
+          <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" stroke="#333" stroke-width="1.5" />
+          <text x="${padL - 5}" y="${padT + 8}" text-anchor="end" font-size="9.5" fill="#555">${fmtShort(maxVal)}</text>
+          <text x="${padL - 5}" y="${padT + plotH}" text-anchor="end" font-size="9.5" fill="#555">$0</text>
+          ${barsSvg}
+        </svg>
+      `;
+    }
+
+    // =========================================================================
+    // POP-UPS INTERACTIVOS AL HACER CLIC EN LAS GRÁFICAS
+    // =========================================================================
+    function buildMiniOrderListHtml(items) {
+      return `
+        <div class="mini-order-list">
+          ${items.map(d => `
+            <div class="mini-order-item" style="cursor:pointer;" onclick="openRowModalById(${d.id})">
+              <div>
+                <strong style="color:var(--wine-dark);">${d.pedido}</strong> &mdash; <strong>${d.cliente}</strong><br/>
+                <span style="color:#555; font-size:11px;">${d.articulo}: ${d.desc.substring(0, 48)}...</span>
+              </div>
+              <div style="text-align:right; white-space:nowrap;">
+                <strong>${fmtCurrency(d.total)}</strong><br/>
+                <span class="status-badge ${d.statusClass}" style="font-size:9.5px;">${d.fComp}</span>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function openStatusDrillModal(statusKey) {
+      const items = currentFiltered.filter(d => d.statusKey === statusKey);
+      const totalVal = items.reduce((a, d) => a + d.total, 0);
+      const totalUtil = items.reduce((a, d) => a + d.utilidad, 0);
+      const margen = totalVal > 0 ? (totalUtil / totalVal) * 100 : 0;
+
+      const meta = {
+        FACTURAR: {
+          title: "Pop-up de Estatus: Listo para Facturar (Quick Win)",
+          desc: "Estas partidas ya cuentan con existencia acreditada en sistema y bandera 'FACTURAR'. No dependen de compras ni de proveedores.",
+          action: "Emitir factura hoy mismo y solicitar a los agentes comerciales las actas de conformidad firmadas."
+        },
+        VENCIDO: {
+          title: "Pop-up de Estatus: BackOrder Vencido Crítico (< 19 Nov)",
+          desc: "Partidas cuya Fecha Compromiso con el cliente ya fue rebasada sin haberse facturado.",
+          action: "Contactar de inmediato a los talleres asignados para obtener fecha/hora firme de arribo y notificar proactivamente al cliente."
+        },
+        POR_VENCER: {
+          title: "Pop-up de Estatus: Alerta Por Vencer (19 - 20 Nov)",
+          desc: "Partidas en el límite operativo que vencen entre hoy jueves 19 y mañana viernes 20 de noviembre.",
+          action: "Asegurar recepción física en almacén en las próximas 24 horas para evitar que caigan en cartera vencida."
+        },
+        EN_TIEMPO: {
+          title: "Pop-up de Estatus: Cartera En Tiempo (> 20 Nov)",
+          desc: "Proyectos de fabricación, maquinado o reparación que se encuentran dentro del plazo prometido al cliente.",
+          action: "Solicitar reporte semanal de avance físico a los proveedores críticos (David Segura, Rackart, JCW)."
+        }
+      }[statusKey];
+
+      document.getElementById("modalTitle").textContent = meta.title;
+      document.getElementById("modalBody").innerHTML = `
+        <div class="modal-section">
+          <h4>Diagnóstico del Segmento Seleccionado</h4>
+          <p>${meta.desc}</p>
+          <div class="detail-grid">
+            <div class="detail-item"><span>Monto Acumulado</span><strong style="color:var(--wine-primary); font-size:16px;">${fmtCurrency(totalVal)}</strong></div>
+            <div class="detail-item"><span>Partidas Involucradas</span><strong>${items.length} órdenes</strong></div>
+            <div class="detail-item"><span>Utilidad Bruta ($)</span><strong>${fmtCurrency(totalUtil)}</strong></div>
+            <div class="detail-item"><span>Margen Promedio (%)</span><strong>${margen.toFixed(2)}%</strong></div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <h4>Acción Recomendada en Campo</h4>
+          <p style="background:var(--wine-tint); padding:10px 12px; border-left:4px solid var(--wine-primary); border-radius:4px;">${meta.action}</p>
+          <div style="margin-top:10px;">
+            <button class="btn btn-wine" onclick="document.getElementById('filterStatus').value='${statusKey}'; applyFilters(); closeModal();">Filtrar Tablero por este Estatus</button>
+          </div>
+        </div>
+        <div class="modal-section">
+          <h4>Partidas en este Segmento (Clic en cualquiera para radiografía individual)</h4>
+          ${buildMiniOrderListHtml(items)}
+        </div>
+      `;
+      document.getElementById("infoModal").classList.add("open");
+    }
+
+    function openWeekDrillModal(bucketName) {
+      const items = currentFiltered.filter(d => d.weekBucket === bucketName);
+      const totalVal = items.reduce((a, d) => a + d.total, 0);
+
+      document.getElementById("modalTitle").textContent = `Cronograma de Flujo: ${bucketName}`;
+      document.getElementById("modalBody").innerHTML = `
+        <div class="modal-section">
+          <h4>Proyección de Liberación Semanal</h4>
+          <p>En este bloque temporal existen <strong>${items.length} partidas</strong> comprometidas por un valor de venta de <strong style="color:var(--wine-primary);">${fmtCurrency(totalVal)}</strong>.</p>
+        </div>
+        <div class="modal-section">
+          <h4>Partidas Programadas en esta Ventana (Clic para detalle)</h4>
+          ${buildMiniOrderListHtml(items)}
+        </div>
+      `;
+      document.getElementById("infoModal").classList.add("open");
+    }
+
+    function openRowModalById(id) {
+      const d = enrichedData.find(x => x.id === id);
+      if (d) openRowModal(d);
+    }
+
+    // TABLA PRINCIPAL
+    function updateTable(data) {
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
+      document.getElementById("tableCounterBadge").textContent = `Mostrando ${data.length} de ${enrichedData.length} partidas`;
+
+      data.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.onclick = () => openRowModal(d);
+        tr.innerHTML = `
+          <td>
+            <strong style="color:var(--wine-dark);">${d.pedido}</strong> <span style="color:#777;">#${d.partida}</span><br/>
+            <small style="color:#666;">OC: ${d.ocCliente}</small>
+          </td>
+          <td><strong>${d.almacen}</strong></td>
+          <td>
+            <strong>${d.cliente}</strong><br/>
+            <small style="color:#666;">${d.agente}</small>
+          </td>
+          <td style="max-width:260px;">
+            <strong>${d.articulo}</strong> <span class="badge-pill" style="background:#EEE;">${d.clasif}</span><br/>
+            <span style="font-size:11px; color:#444;">${d.desc}</span>
+          </td>
+          <td style="white-space:nowrap;">
+            <small style="color:#777;">Orig: ${d.fOrig}</small><br/>
+            <strong>Comp: ${d.fComp}</strong> <small>(${d.leadTime}d)</small>
+          </td>
+          <td><span class="status-badge ${d.statusClass}">${d.statusLabel}</span></td>
+          <td style="white-space:nowrap; font-size:11px;">
+            Sol: <strong>${d.sol}</strong> | Ex: ${d.exist}<br/>
+            Falt: <strong style="color:var(--wine-primary);">${d.falt}</strong> | Trán: <strong>${d.trans}</strong>
+          </td>
+          <td class="num-col" style="color:var(--wine-dark);">
+            ${fmtCurrency(d.total)}<br/>
+            <small style="color:#777; font-weight:400;">Costo: ${fmtCurrency(d.costoTotal)}</small>
+          </td>
+          <td class="num-col">
+            <strong>${d.margenPct.toFixed(1)}%</strong><br/>
+            <small style="color:#666; font-weight:400;">Ut: ${fmtCurrency(d.utilidad)}</small>
+          </td>
+          <td style="max-width:200px;">
+            <strong style="font-size:11px;">${d.proveedor}</strong><br/>
+            <small style="color:var(--wine-primary); font-weight:700;">Comp: ${d.comprador}</small>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openVariableModal(key) {
+      const info = variableExplanations[key];
+      if (!info) return;
+      document.getElementById("modalTitle").textContent = info.title;
+      document.getElementById("modalBody").innerHTML = `
+        <div class="modal-section">
+          <h4>1. ¿Qué información muestra este objeto visual?</h4>
+          <p>${info.what}</p>
+        </div>
+        <div class="modal-section">
+          <h4>2. ¿Cómo juega esta variable en la lógica del análisis?</h4>
+          <p>${info.logic}</p>
+        </div>
+        <div class="modal-section">
+          <h4>3. Impacto para Toma de Decisiones ante Dirección</h4>
+          <p>${info.impact}</p>
+        </div>
+      `;
+      document.getElementById("infoModal").classList.add("open");
+    }
+
+    function openRowModal(d) {
+      let recomendacion = "";
+      if (d.statusKey === "FACTURAR") {
+        recomendacion = `FACTURACIÓN INMEDIATA: La partida ya cuenta con existencia (${d.exist}) y bandera 'FACTURAR'. Solicitar a ${d.agente} el acta de entrega firmada para emitir CFDI hoy.`;
+      } else if (d.statusKey === "VENCIDO") {
+        recomendacion = `RESCATE URGENTE: Venció el ${d.fComp}. El comprador (${d.comprador}) debe exigir entrega inmediata al proveedor (${d.proveedor}) y el agente (${d.agente}) debe actualizar al cliente.`;
+      } else if (d.statusKey === "POR_VENCER") {
+        recomendacion = `ALERTA 24 HORAS: Vence el ${d.fComp}. Confirmar recepción física en almacén ${d.almacen} con ${d.proveedor} hoy mismo.`;
+      } else {
+        recomendacion = `SEGUIMIENTO EN TALLER: Plazo de ${d.leadTime} días con entrega el ${d.fComp}. Auditar avance de manufactura con ${d.proveedor}.`;
+      }
+
+      document.getElementById("modalTitle").textContent = `Radiografía de Partida: ${d.pedido} (Partida ${d.partida})`;
+      document.getElementById("modalBody").innerHTML = `
+        <div class="modal-section">
+          <h4>Diagnóstico y Acción en Campo</h4>
+          <p style="margin-bottom:8px;"><span class="status-badge ${d.statusClass}">${d.statusLabel}</span> &mdash; <strong>${d.cliente}</strong> (OC: <code>${d.ocCliente}</code>)</p>
+          <p style="background:var(--wine-tint); padding:11px; border-left:4px solid var(--wine-primary); border-radius:4px; font-size:13px;">
+            <strong>Acción Recomendada:</strong> ${recomendacion}
+          </p>
+        </div>
+        <div class="modal-section">
+          <h4>Descripción Técnica del Servicio</h4>
+          <p><strong>SKU:</strong> ${d.articulo} | <strong>Clasificación:</strong> ${d.clasif} | <strong>Plazo Pactado:</strong> ${d.leadTime} días</p>
+          <p>${d.desc}</p>
+        </div>
+        <div class="modal-section">
+          <h4>Rentabilidad de la Partida</h4>
+          <div class="detail-grid">
+            <div class="detail-item"><span>Venta Total (Sin IVA)</span><strong style="color:var(--wine-primary); font-size:16px;">${fmtCurrency(d.total)}</strong></div>
+            <div class="detail-item"><span>Costo Directo Total</span><strong>${fmtCurrency(d.costoTotal)}</strong></div>
+            <div class="detail-item"><span>Utilidad Bruta ($)</span><strong style="color:var(--st-facturar);">${fmtCurrency(d.utilidad)}</strong></div>
+            <div class="detail-item"><span>Margen Bruto (%)</span><strong>${d.margenPct.toFixed(2)}%</strong></div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <h4>Trazabilidad de Compras y Abastecimiento</h4>
+          <div class="detail-grid">
+            <div class="detail-item"><span>Proveedor Asignado</span><strong>${d.proveedor}</strong></div>
+            <div class="detail-item"><span>Comprador FINSA</span><strong>${d.comprador}</strong></div>
+            <div class="detail-item"><span>Fechas (Orig ➔ Comp)</span><strong>${d.fOrig} ➔ ${d.fComp}</strong></div>
+            <div class="detail-item"><span>Registro OC (Columna Compras)</span><strong style="font-size:11px;">${d.comprasInfo}</strong></div>
+          </div>
+        </div>
+      `;
+      document.getElementById("infoModal").classList.add("open");
+    }
+
+    function closeModal() {
+      document.getElementById("infoModal").classList.remove("open");
+    }
+
+    function switchTab(evt, tabId) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+      evt.currentTarget.classList.add("active");
+      document.getElementById(tabId).classList.add("active");
+    }
+
+    function exportToCSV() {
+      const headers = ["Pedido","Partida","Almacen","Articulo","Descripcion","FechaOrig","FechaComp","LeadTimeDias","Estatus","Cliente","Solicitada","Faltante","Transito","CostoTotal","TotalVenta","Utilidad","MargenPct","Proveedor","Comprador","Agente"];
+      const rows = currentFiltered.map(d => [
+        `"${d.pedido}"`, d.partida, d.almacen, `"${d.articulo}"`, `"${d.desc.replace(/"/g, '""')}"`,
+        d.fOrig, d.fComp, d.leadTime, `"${d.statusLabel}"`, `"${d.cliente}"`, d.sol, d.falt, d.trans,
+        d.costoTotal.toFixed(2), d.total.toFixed(2), d.utilidad.toFixed(2), d.margenPct.toFixed(2),
+        `"${d.proveedor}"`, `"${d.comprador}"`, `"${d.agente}"`
+      ]);
+      const csv = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+      const link = document.createElement("a");
+      link.setAttribute("href", encodeURI(csv));
+      link.setAttribute("download", "BackOrder_Interactivo_FINSA.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    window.onload = () => {
+      initFilters();
+      applyFilters();
+    };
+  </script>
+</body>
+</html>
